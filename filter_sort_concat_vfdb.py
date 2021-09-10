@@ -8,9 +8,9 @@ import sys
 # TODO make this an arg
 #TODO proper argparse and usage check
 argparser = argparse.ArgumentParser(description='Process results from diamond.')
-argparser.add_argument('i', help='Input directory containing relevant files/directories')
-argparser.add_argument('db', help='Name of database, e.g. vfdb or bacmet.')
-argparser.add_argument('o', help='Ouput directory.')
+argparser.add_argument('-i', help='Input directory containing relevant files/directories')
+argparser.add_argument('-db', help='Name of database, e.g. vfdb or bacmet.')
+argparser.add_argument('-o', help='Ouput directory.')
 
 if __name__ == "__main__":
 
@@ -31,9 +31,8 @@ if __name__ == "__main__":
         df['qcover'] = df['length']/df['slen']
         unique_hits = df.sort_values('pident', ascending=False).drop_duplicates(['qseqid', 'sequence'])
         filtered_unique_hits = unique_hits[(unique_hits['pident'] >= 60) & (unique_hits['qcover'] >= 0.6)]
-        filtered_unique_hits.sort_values(['qseqid','pident', 'mismatch'], ascending = [True, False, False]) #orders the table bye sequence ID
         hit_dir2 = "{0}/{1}".format(file, 'filtered_unqiue_hits2.csv')
-        filtered_unique_hits.to_csv('hit_dir2')
+        filtered_unique_hits.to_csv(hit_dir2)
         all_VFDB_results.append(filtered_unique_hits)
 
     all_VFDB_results = pd.concat(all_VFDB_results)

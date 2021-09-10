@@ -36,16 +36,15 @@ shift "$(( OPTIND - 1))"
 
 ################################################################################
 
-################################################################################
-### prepare directories                                                      ###
-################################################################################
+
+### prepare directories
 mkdir -p "$outdir"
 cat /dev/null > ./commands.txt
 
 #creates for each assembly a folder with the same name as the assembly file
 for genome in "$indir"/*.fasta;
 do
-   mkdir "${genome%.*}"; mv "$genome" "${genome%.*}";
+   mkdir ${genome%.*}; mv "$genome" ${genome%.*};
 done;
 
 #for each assembly in the folder finds the ORFs using Prodigal
@@ -57,7 +56,7 @@ done;
 # of 25 hits is set as specified by --max-target-seqs
 for genome in "$indir"/*/*.fasta;
 do
-  echo -e "prodigal -i ""$genome"" -d ""${genome%.*}""_orfs.fna; diamond blastx --query ""${genome%.*}""_orfs.fna --db $local_db_path --evalue 1e-06 --outfmt 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore full_qseq --max-target-seqs 25 --out ""${genome%_*}""_VFDB_hits.out6" >> commands.txt;
+  echo -e "prodigal -i "$genome" -d "${genome%.*}"_orfs.fna; diamond blastx --query "${genome%.*}"_orfs.fna --db $local_db_path --evalue 1e-06 --outfmt 6 qseqid sseqid pident slen qlen length mismatch gapopen qstart qend sstart send evalue bitscore full_qseq --max-target-seqs 25 --out "${genome%.*}"_"$db_name"_hits.out6" >> commands.txt;
 done;
 
 #runs the process in parallel
@@ -71,17 +70,18 @@ find "$indir" -name '.DS_Store' -type f -delete
 #all the assembly
 python filter_sort_concat_vfdb.py -i "$indir" -db "$db_name" -o "$outdir"
 
-awk -F , '{print ">"$16"\n"$15}' "$outdir"/total_VFDB_table.csv  > "$outdir"/total_VFDB_table.fasta
+awk -F , 'NR>1{print ">"$17"\n"$16}' "$outdir"/total_"$db_name"_table.csv  > "$outdir"/total_"$db_name"_table.fasta
 
 mkdir -p "$outdir"/"$db_name"_data
 
-vsearch --cluster_size "$outdir"/Total_VFDB_table.fasta --notrunclabels --clusters "$outdir"/"$db_name"_data/VFDBCluster --id 0.80
+vsearch --cluster_size "$outdir"/total_"$db_name"_table.fasta --notrunclabels --clusters "$outdir"/"$db_name"_data/"$db_name"Cluster --id 0.95
 
 for i in "$outdir"/"$db_name"_data/*;
 do
-  mv "$i" $("$i"".fasta");
+  mv $i $(echo $i".fasta");
 done ;
 
 python gloome_to_csv.py -g "$outdir"/"$db_name"_data/ -o "$outdir"/output_presence_absence
 
-gainLoss paramfile.txt
+#To run gainLoss, uncomment
+#gainLoss paramfile.txt
